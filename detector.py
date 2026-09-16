@@ -21,31 +21,45 @@ def _values(value: Any):
         yield str(value)
 
 
+def _matching_evidence(values: list[str], pattern: re.Pattern[str]) -> list[str]:
+    matches = []
+    for value in values:
+        if pattern.search(value):
+            matches.append(value[:160])
+    return matches[:3]
+
+
 def analyse_request(request: dict[str, Any]) -> dict[str, Any]:
     signals = []
     searchable = list(_values(request))
     combined = " ".join(searchable)
 
     if SQL_INJECTION.search(combined):
+        evidence = _matching_evidence(searchable, SQL_INJECTION)
         signals.append({
             "detector": "sql_injection",
             "severity": "high",
             "points": 70,
-            "reason": "Request contains syntax commonly associated with SQL injection.",
+            "reason": "Request contains SQL-style boolean logic, UNION SELECT, comment markers, or block-comment syntax.",
+            "evidence": evidence,
         })
     if PATH_TRAVERSAL.search(combined):
+        evidence = _matching_evidence(searchable, PATH_TRAVERSAL)
         signals.append({
             "detector": "path_traversal",
             "severity": "high",
             "points": 65,
-            "reason": "Request contains path traversal indicators.",
+            "reason": "Request contains ../ or encoded traversal sequences that can escape an intended directory.",
+            "evidence": evidence,
         })
     if SSRF_TARGET.search(combined):
+        evidence = _matching_evidence(searchable, SSRF_TARGET)
         signals.append({
             "detector": "ssrf",
             "severity": "high",
             "points": 60,
-            "reason": "Request references a private or metadata-service address.",
+            "reason": "Request references localhost, a private network address, or the cloud metadata service.",
+            "evidence": evidence,
         })
 
     score = min(sum(signal["points"] for signal in signals), 100)
