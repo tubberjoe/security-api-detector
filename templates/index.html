@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>API Attack Detector</title>
+  <style>
+    body { font-family: sans-serif; max-width: 900px; margin: 2rem auto; padding: 0 1rem; }
+    textarea { width: 100%; min-height: 280px; font-family: monospace; }
+    button { padding: .7rem 1.2rem; margin-top: .7rem; }
+    .result { margin-top: 1.5rem; padding: 1rem; border: 1px solid #ccc; }
+    .Malicious { border-left: 6px solid #c00; }
+    .Suspicious { border-left: 6px solid #e69500; }
+    .Benign { border-left: 6px solid #198754; }
+    code { white-space: pre-wrap; }
+  </style>
+</head>
+<body>
+  <h1>API Attack Detector</h1>
+  <p>Paste a JSON representation of an API request.</p>
+  <form method="post">
+    <textarea name="request_json">{{ request_json }}</textarea>
+    <br><button type="submit">Analyse request</button>
+  </form>
+  {% if error %}<div class="result"><strong>Input error:</strong> {{ error }}</div>{% endif %}
+  {% if result %}
+  <div class="result {{ result.verdict }}">
+    <h2>{{ result.verdict }}</h2>
+    <p><strong>Risk score:</strong> {{ result.risk_score }}/100</p>
+    {% if result.signals %}
+      <h3>Signals</h3>
+      <ul>{% for signal in result.signals %}<li><strong>{{ signal.detector }}:</strong> {{ signal.reason }}</li>{% endfor %}</ul>
+    {% else %}<p>No suspicious signals detected.</p>{% endif %}
+  </div>
+  {% endif %}
+</body>
+</html>

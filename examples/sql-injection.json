@@ -1,0 +1,5 @@
+{
+  "method": "POST",
+  "path": "/api/v1/users/search",
+  "body": {"username": "admin' OR 1=1--"}
+}

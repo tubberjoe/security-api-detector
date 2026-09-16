@@ -1,0 +1,13 @@
+.venv/
+__pycache__/
+.pytest_cache/
+
+# Local secrets and credential material
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+secrets/
+secret/
+credentials/
