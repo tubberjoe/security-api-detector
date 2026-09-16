@@ -47,6 +47,20 @@ The final score is capped at 100:
 
 The result identifies a suspicious request or attack attempt. It does not prove that the target application was vulnerable or that exploitation succeeded.
 
+## Scope
+
+This version focuses on three attack techniques at the individual request level:
+
+- SQL injection
+- Path traversal
+- Server-side request forgery (SSRF)
+
+It checks values in the request path, query parameters, headers, and body, including nested JSON. The detector looks for recognisable indicators of attack attempts and returns an explainable score with the matching evidence.
+
+Authentication context, request history, behavioural baselines, and external threat intelligence are outside the current implementation. The detector also does not cover every API security issue, including IDOR, brute-force activity across multiple requests, account compromise, or confirmed unauthorised data access.
+
+These boundaries were chosen to keep the demonstration focused. A production system would need identity, application, network, and host telemetry, along with calibrated rules tested against labelled traffic.
+
 ## Where the detection logic lives
 
 The detection logic is in `detector.py`, mainly in `analyse_request()`.
