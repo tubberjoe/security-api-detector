@@ -1,0 +1,4 @@
+name = "security-api-detector"
+main = "worker.py"
+compatibility_date = "2026-09-16"
+compatibility_flags = ["python_workers"]
