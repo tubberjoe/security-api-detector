@@ -49,7 +49,7 @@ def analyse_request(request: dict[str, Any]) -> dict[str, Any]:
         signals.append({
             "detector": "path_traversal",
             "severity": "high",
-            "points": 65,
+            "points": 70,
             "reason": "Request contains ../ or encoded traversal sequences that can escape an intended directory.",
             "evidence": evidence,
         })
