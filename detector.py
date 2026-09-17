@@ -8,6 +8,7 @@ from typing import Any
 SQL_INJECTION = re.compile(r"(?:\bor\b\s+\d+\s*=\s*\d+|\bunion\b\s+select|--|/\*)", re.IGNORECASE)
 PATH_TRAVERSAL = re.compile(r"(?:\.\./|%2e%2e|%252e%252e)", re.IGNORECASE)
 SSRF_TARGET = re.compile(r"(?:https?://(?:127\.0\.0\.1|localhost|169\.254\.169\.254)|https?://10\.|https?://192\.168\.)", re.IGNORECASE)
+SSRF_METADATA = re.compile(r"https?://169\.254\.169\.254(?:/latest/meta-data(?:/|$)|/)", re.IGNORECASE)
 
 
 def _values(value: Any):
@@ -54,11 +55,12 @@ def analyse_request(request: dict[str, Any]) -> dict[str, Any]:
         })
     if SSRF_TARGET.search(combined):
         evidence = _matching_evidence(searchable, SSRF_TARGET)
+        metadata_target = bool(SSRF_METADATA.search(combined))
         signals.append({
             "detector": "ssrf",
             "severity": "high",
-            "points": 60,
-            "reason": "Request references localhost, a private network address, or the cloud metadata service.",
+            "points": 75 if metadata_target else 60,
+            "reason": "Request targets the cloud metadata service." if metadata_target else "Request references localhost or a private network address.",
             "evidence": evidence,
         })
 

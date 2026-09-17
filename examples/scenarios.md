@@ -71,7 +71,7 @@ Paste each JSON object separately into the web application.
 }
 ```
 
-## 7. SSRF against localhost — expected Malicious
+## 7. SSRF against localhost — expected Suspicious
 
 ```json
 {
@@ -120,7 +120,7 @@ This is deliberately not valid JSON:
 {"method": "GET", "path": "/api/v1/users"
 ```
 
-## 12. JSON with nested values — expected Malicious
+## 12. JSON with nested values — expected Suspicious
 
 ```json
 {

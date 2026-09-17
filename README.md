@@ -95,7 +95,7 @@ Tests should check the expected behaviour. For example, a SQL injection test sho
 
 The detector uses visible, deterministic rules instead of machine learning. This keeps the results easy to test and explain during the interview, especially when the available traffic is not labelled.
 
-The score is a heuristic, not a probability. SQL injection contributes 70 points, path traversal 65 points, and generic SSRF 60 points. These values are starting assumptions that would need to be calibrated against labelled traffic in a production system.
+The score is a heuristic, not a probability. SQL injection contributes 70 points, path traversal 65 points, generic SSRF 60 points, and cloud metadata targeting 75 points. These values are starting assumptions that would need to be calibrated against labelled traffic in a production system.
 
 Recursive inspection supports nested JSON without requiring a fixed request schema. The trade-off is that a pattern may be flagged even when it appears in a legitimate context. Evidence is limited to short matching values so the result stays readable and does not expose an entire request body.
 
