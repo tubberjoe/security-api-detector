@@ -20,6 +20,7 @@ button { background: var(--blue); border: 0; border-radius: 9px; color: white; c
 .Malicious { border-left: 6px solid #c52d45; } .Malicious .verdict { background: #fde8ed; color: #a51f38; } .Suspicious { border-left: 6px solid #d99000; } .Suspicious .verdict { background: #fff3d6; color: #895c00; } .Benign { border-left: 6px solid #16855b; } .Benign .verdict { background: #e3f7ee; color: #126744; }
 .score { font-size: 1.2rem; font-variant-numeric: tabular-nums; } .signal { border-top: 1px solid var(--line); margin-top: 1rem; padding-top: 1rem; } .signal-title { font-weight: 800; text-transform: capitalize; } .signal p { color: var(--muted); margin: .3rem 0; }
 .evidence { background: #f5f7fa; border-radius: 8px; color: #39445a; font: 13px/1.4 ui-monospace, monospace; margin-top: .5rem; overflow-wrap: anywhere; padding: .7rem; } .error { border-left: 6px solid #c52d45; }
+.footer { color: var(--muted); font-size: .9rem; margin-top: 1.5rem; text-align: center; } .footer a { color: var(--blue); }
 """
 
 
@@ -50,7 +51,7 @@ def _page(request_json: str, result: dict | None = None, error: str | None = Non
 <div class="eyebrow">Security analysis</div><h1>API Security Checker</h1>
 <p class="intro">Paste an API request as JSON. The detector checks its fields for SQL injection, path traversal, and SSRF indicators.</p>
 <form class="panel" method="post"><label for="request_json">API request JSON</label><textarea id="request_json" name="request_json">{escape(request_json)}</textarea><button type="submit">Analyse request</button></form>
-{error_html}{result_html}</main></body></html>"""
+{error_html}{result_html}<footer class="footer">Created by Julian Duncan · <a href="https://github.com/tubberjoe/security-api-detector">GitHub</a> · <a href="https://www.linkedin.com/in/julianduncanuk/">LinkedIn</a></footer></main></body></html>"""
 
 
 class Default(WorkerEntrypoint):

@@ -30,6 +30,8 @@
     .signal p { color: var(--muted); margin: .3rem 0; }
     .evidence { background: #f5f7fa; border-radius: 8px; color: #39445a; font: 13px/1.4 ui-monospace, monospace; margin-top: .5rem; overflow-wrap: anywhere; padding: .7rem; }
     .error { border-left: 6px solid #c52d45; }
+    .footer { color: var(--muted); font-size: .9rem; margin-top: 1.5rem; text-align: center; }
+    .footer a { color: var(--blue); }
   </style>
 </head>
 <body>
@@ -53,6 +55,7 @@
     {% else %}<p>No suspicious indicators were detected in the supplied request.</p>{% endif %}
   </div>
   {% endif %}
+  <footer class="footer">Created by Julian Duncan · <a href="https://github.com/tubberjoe/security-api-detector">GitHub</a> · <a href="https://www.linkedin.com/in/julianduncanuk/">LinkedIn</a></footer>
 </main>
 </body>
 </html>
