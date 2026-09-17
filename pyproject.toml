@@ -8,3 +8,7 @@ dependencies = [
 
 [dependency-groups]
 dev = ["workers-py"]
+
+[tool.setuptools]
+py-modules = ["worker", "detector"]
+packages = []
