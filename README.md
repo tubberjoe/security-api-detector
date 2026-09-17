@@ -1,43 +1,47 @@
-# API Security Checker
+# API Attack Detector
 
-A small Cloudflare Python Worker that analyses JSON descriptions of API requests and returns a risk verdict with supporting evidence.
+Small Cloudflare Python Worker that analyses JSON API requests and returns a verdict, score, explanation, and evidence.
 
-## Technologies used
-
-- Python 3.11+
-- Cloudflare Workers with the Python Workers runtime
-- `workers-py` for the Worker entry point and response handling
-- `wrangler` for deployment
-- Python's standard library, including `json`, `re`, and HTML escaping utilities
-- Pytest for automated tests
+Live app: https://security-api-detector.tbbkcc2rkr.workers.dev/
 
 ## Architecture
 
-The browser sends a JSON request through the web form to the Cloudflare Worker. The Worker parses the input and passes it to the detection engine. The engine returns a structured result, which the Worker renders as HTML.
-
 ```text
-Browser
-  ↓
-Cloudflare Python Worker
-  ↓
-Detection engine
-  ↓
-Verdict, score, reasons, and evidence
+Browser → Cloudflare Worker → detector.py → verdict, score, reasons, evidence
 ```
 
-The detection engine is separate from the web layer, so it could be reused by another interface or security pipeline. User-provided values are escaped before they are rendered in HTML.
+The Worker accepts JSON from the web form. `detector.py` analyses the request and returns structured results. The Worker renders those results as HTML and escapes user values before display.
+
+The detector is separate from the web layer. This makes it reusable from another interface or security pipeline.
 
 ## Detection approach
 
-The detector checks values in the request path, query parameters, headers, and body. It currently looks for indicators of:
+The detector checks request paths, query parameters, headers, bodies, and nested JSON values for:
 
-- SQL injection, including boolean conditions, `UNION SELECT`, and SQL comment syntax
-- Path traversal, including `../` and encoded traversal sequences
-- SSRF, including requests to localhost, private network ranges, and the cloud metadata service
+- SQL injection, including boolean conditions, `UNION SELECT`, and SQL comments
+- Path traversal, including `../` and encoded traversal
+- SSRF, including localhost, private networks, and cloud metadata targets
 
-Each matching detector returns its name, severity, score contribution, explanation, and up to three matching evidence values.
+Python regular expressions search for recognisable attack patterns. The detector reports the matching value as evidence, with a limit of three short values.
 
-The final score is capped at 100:
+It detects attack indicators. It does not prove that exploitation succeeded.
+
+## Design decisions and trade-offs
+
+The detector uses fixed rules instead of machine learning. Each rule is visible in `detector.py`, so its behaviour is easy to inspect and test. This also avoids needing a large labelled dataset.
+
+The detector recursively checks dictionaries and lists. This means it can find suspicious values inside nested JSON, even when request fields have different names or structures.
+
+The detector displays only short matching values as evidence. This helps explain the result without showing an entire request body, which could contain sensitive information.
+
+The score is a heuristic, not a probability. Signals add points, with a maximum of 100:
+
+| Signal | Points | Reason |
+|---|---:|---|
+| SQL injection | 70 | Strong indicator of an attempt to alter a database query. |
+| Path traversal | 70 | Repeated or encoded traversal can access files outside the intended directory. |
+| Generic SSRF | 60 | Private-network target is suspicious, but may be an internal service used legitimately. |
+| Cloud metadata SSRF | 75 | Metadata endpoints can expose cloud credentials and instance details. |
 
 ```text
 0–29   Benign
@@ -45,87 +49,51 @@ The final score is capped at 100:
 70–100 Malicious
 ```
 
-The result identifies a suspicious request or attack attempt. It does not prove that the target application was vulnerable or that exploitation succeeded.
-
-## Scope
-
-This version focuses on three attack techniques at the individual request level:
-
-- SQL injection
-- Path traversal
-- Server-side request forgery (SSRF)
-
-It checks values in the request path, query parameters, headers, and body, including nested JSON. The detector looks for recognisable indicators of attack attempts and returns an explainable score with the matching evidence.
-
-Authentication context, request history, behavioural baselines, and external threat intelligence are outside the current implementation. The detector also does not cover every API security issue, including IDOR, brute-force activity across multiple requests, account compromise, or confirmed unauthorised data access.
-
-These boundaries were chosen to keep the demonstration focused. A production system would need identity, application, network, and host telemetry, along with calibrated rules tested against labelled traffic.
-
-## Where the detection logic lives
-
-The detection logic is in `detector.py`, mainly in `analyse_request()`.
-
-The main components are:
-
-- `_values()` walks through dictionaries and lists so nested request values are inspected.
-- `SQL_INJECTION`, `PATH_TRAVERSAL`, and `SSRF_TARGET` contain the current regular-expression indicators.
-- `_matching_evidence()` returns values that matched a detector, limited to three results and 160 characters per value.
-- `analyse_request()` runs the detectors, builds the signals, adds their score contributions, and assigns the final verdict.
-- `load_request()` parses the submitted JSON and checks that the root is an object.
-
-The Cloudflare-specific web code is in `worker.py`. It accepts the form submission, calls `load_request()` and `analyse_request()`, escapes values for HTML, and renders the result. Detection rules should normally be changed in `detector.py`, rather than copied into `worker.py`.
-
-## How to change the detection logic
-
-To change an existing detector, update its regular expression and, if needed, its reason or score in `detector.py`. For example, adding another SQL injection indicator means updating `SQL_INJECTION` and the related explanation.
-
-To add a new detector:
-
-1. Add a compiled regular expression near the other detector patterns.
-2. Add a check in `analyse_request()`.
-3. Add a signal with a detector name, severity, score, reason, and evidence.
-4. Add a test in `tests/test_detector.py`.
-5. Add a matching example to `examples/scenarios.md`.
-6. Update this README if the supported attack types or scoring change.
-7. Run the tests before deploying with Wrangler.
-
-Tests should check the expected behaviour. For example, a SQL injection test should check the verdict, score range, detector name, and evidence.
-
-## Design decisions and trade-offs
-
-The detector uses visible, deterministic rules instead of machine learning. This keeps the results easy to test and explain during the interview, especially when the available traffic is not labelled.
-
-The score is a heuristic, not a probability. SQL injection and path traversal each contribute 70 points, generic SSRF contributes 60 points, and cloud metadata targeting contributes 75 points. These values are starting assumptions that would need to be calibrated against labelled traffic in a production system.
-
-Recursive inspection supports nested JSON without requiring a fixed request schema. The trade-off is that a pattern may be flagged even when it appears in a legitimate context. Evidence is limited to short matching values so the result stays readable and does not expose an entire request body.
+These starting values need calibration against labelled traffic in production.
 
 ## Known limitations
 
-- Simple pattern matching can produce false positives.
-- Obfuscated or novel attacks may evade the rules.
-- The detector does not retain request history, so it cannot identify rate-based enumeration.
-- It does not use external IP reputation or threat-intelligence services.
-- It does not confirm whether an exploit succeeded. That requires application, database, network, or host telemetry.
-- The Worker is a demonstration application and is not hardened to act as a production API gateway.
+- Rules can create false positives.
+- Obfuscated or new attacks may evade the rules.
+- The detector does not retain request history, so it cannot identify activity across multiple requests.
+- It does not use authentication context, behaviour baselines, external IP reputation, or threat intelligence.
+- It does not detect every API issue, including IDOR, multi-request brute force, account compromise, or confirmed data access.
+- It does not confirm successful exploitation. That requires application, database, network, or host telemetry.
+- The Worker is a demonstration application, not a production API gateway.
 
-## Deployment
+## Technologies
 
-The project is deployed as the `security-api-detector` Cloudflare Worker:
+- Python 3.11+
+- Cloudflare Workers Python runtime
+- `workers-py`
+- Wrangler
+- Python standard library, including `json` and `re`
+- Pytest
 
-https://security-api-detector.tbbkcc2rkr.workers.dev/
+## Detection logic
 
-Deploy updates from the project directory with:
+Detection logic is mainly in `detector.py`, especially `analyse_request()`.
 
-```bash
-npx wrangler deploy
-```
+- `_values()` walks dictionaries and lists.
+- `SQL_INJECTION`, `PATH_TRAVERSAL`, and `SSRF_TARGET` hold compiled regular expressions.
+- `_matching_evidence()` returns up to three short matching values.
+- `analyse_request()` runs detectors, calculates the score, and assigns the verdict.
+- `load_request()` parses JSON and checks that its root is an object.
 
-Deployment requires `CLOUDFLARE_API_TOKEN` to be supplied as a local environment variable. The token must not be committed to Git or stored in project source files.
+`worker.py` handles the Cloudflare web page. Keep detection rules in `detector.py`, not `worker.py`.
 
-## Tests
+## How to change detection logic
 
-The repository includes automated tests covering the current detector behaviour. The latest reported result is:
+1. Edit the relevant regular expression, reason, or score in `detector.py`.
+2. For a new detector, add a compiled regular expression and check inside `analyse_request()`.
+3. Return a signal with a detector name, severity, score, reason, and evidence.
+4. Add tests in `tests/test_detector.py`.
+5. Add an example to `examples/scenarios.md`.
+6. Update scoring or scope documentation if needed.
+7. Run `./.venv/bin/pytest -q` before deployment.
 
-```text
-2 passed
-```
+The repository also contains a local Flask entry point in `app.py` for development and testing.
+
+## Scenario testing
+
+All 12 scenarios in `examples/scenarios.md` were tested. Each returned its documented result, including benign requests, attack indicators, nested JSON, missing fields, and malformed JSON.
