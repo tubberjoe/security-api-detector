@@ -1,4 +1,4 @@
-"""Cloudflare Python Worker entry point for the API attack detector."""
+"""Cloudflare Python Worker entry point for the API security checker."""
 
 from html import escape
 from urllib.parse import parse_qs
@@ -46,9 +46,9 @@ def _page(request_json: str, result: dict | None = None, error: str | None = Non
             f'<h3>Why this was flagged</h3>{signals}</div>'
         )
     error_html = f'<div class="result error"><strong>Input error:</strong> {escape(error)}</div>' if error else ""
-    return f"""<!doctype html><html lang="en"><head><meta charset="utf-8"><title>API Attack Detector</title><style>{STYLE}</style></head><body><main>
-<div class="eyebrow">Security analysis · explainable heuristics</div><h1>API Attack Detector</h1>
-<p class="intro">Paste a JSON representation of an API request. The detector checks request fields for indicators of SQL injection, path traversal, and SSRF.</p>
+    return f"""<!doctype html><html lang="en"><head><meta charset="utf-8"><title>API Security Checker</title><style>{STYLE}</style></head><body><main>
+<div class="eyebrow">Security analysis</div><h1>API Security Checker</h1>
+<p class="intro">Paste an API request as JSON. The detector checks its fields for SQL injection, path traversal, and SSRF indicators.</p>
 <form class="panel" method="post"><label for="request_json">API request JSON</label><textarea id="request_json" name="request_json">{escape(request_json)}</textarea><button type="submit">Analyse request</button></form>
 {error_html}{result_html}</main></body></html>"""
 

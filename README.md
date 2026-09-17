@@ -1,4 +1,4 @@
-# API Attack Detector
+# API Security Checker
 
 A small Cloudflare Python Worker that analyses JSON descriptions of API requests and returns a risk verdict with supporting evidence.
 

@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>API Attack Detector</title>
+  <title>API Security Checker</title>
   <style>
     :root { color-scheme: light; --ink: #172033; --muted: #667085; --line: #d9e0ea; --panel: #fff; --blue: #2457d6; }
     * { box-sizing: border-box; }
@@ -34,9 +34,9 @@
 </head>
 <body>
 <main>
-  <div class="eyebrow">Security analysis · explainable heuristics</div>
-  <h1>API Attack Detector</h1>
-  <p class="intro">Paste a JSON representation of an API request. The detector checks request fields for indicators of SQL injection, path traversal, and SSRF.</p>
+  <div class="eyebrow">Security analysis</div>
+  <h1>API Security Checker</h1>
+  <p class="intro">Paste an API request as JSON. The detector checks its fields for SQL injection, path traversal, and SSRF indicators.</p>
   <form class="panel" method="post">
     <label for="request_json">API request JSON</label>
     <textarea name="request_json">{{ request_json }}</textarea>
