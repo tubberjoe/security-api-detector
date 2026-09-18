@@ -6,7 +6,9 @@ from typing import Any
 
 
 SQL_INJECTION = re.compile(r"(?:\bor\b\s+\d+\s*=\s*\d+|\bunion\b\s+select|--|/\*)", re.IGNORECASE)
-PATH_TRAVERSAL = re.compile(r"(?:\.\./|%2e%2e|%252e%252e)", re.IGNORECASE)
+# Match literal, encoded, double-encoded, and mixed encoded traversal
+# components such as Apache's `.%2e/` exploit form.
+PATH_TRAVERSAL = re.compile(r"(?:\.\./|%2e%2e|%252e%252e|\.%2e|%2e\.)", re.IGNORECASE)
 SSRF_TARGET = re.compile(r"(?:https?://(?:127\.0\.0\.1|localhost|169\.254\.169\.254)|https?://10\.|https?://192\.168\.)", re.IGNORECASE)
 SSRF_METADATA = re.compile(r"https?://169\.254\.169\.254(?:/latest/meta-data(?:/|$)|/)", re.IGNORECASE)
 

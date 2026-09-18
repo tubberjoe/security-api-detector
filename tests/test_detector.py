@@ -22,6 +22,19 @@ def test_path_traversal_is_malicious_and_explained():
     assert "escape" in result["signals"][0]["reason"]
 
 
+def test_apache_cve_encoded_traversal_is_malicious():
+    request = {
+        "method": "GET",
+        "path": "/cgi-bin/.%2e/.%2e/.%2e/.%2e/etc/passwd",
+    }
+
+    result = analyse_request(request)
+
+    assert result["verdict"] == "Malicious"
+    assert result["risk_score"] == 70
+    assert result["signals"][0]["detector"] == "path_traversal"
+
+
 def test_generic_ssrf_is_suspicious():
     request = {"method": "POST", "body": {"url": "http://127.0.0.1:8080/admin"}}
 
